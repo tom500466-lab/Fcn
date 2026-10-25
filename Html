@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCN結構型商品互動解析系統 | SNINR202610013</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'Inter', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#1e1b4b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        /* Custom Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 10px;
+            cursor: pointer;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #f43f5e 0%, #f43f5e 35%, #f59e0b 35%, #f59e0b 40%, #10b981 40%, #3b82f6 70%, #8b5cf6 100%);
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 26px;
+            width: 26px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 4px solid #4f46e5;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            transition: transform 0.15s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .tab-active {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.35);
+        }
+        .pulse-badge {
+            animation: softPulse 2.5s infinite;
+        }
+        @keyframes softPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-16 selection:bg-indigo-500 selection:text-white">
+
+    <!-- Top Header / Product Banner -->
+    <header class="border-b border-slate-800 bg-slate-900/90 sticky top-0 z-40 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-chart-pie text-white text-lg"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">FCN 結構型商品解析</span>
+                        <span class="text-xs font-mono text-slate-400">代號：SNINR202610013</span>
+                    </div>
+                    <h1 class="text-lg sm:text-xl font-bold text-white tracking-tight">營業員專業提案與風險模擬儀表板</h1>
+                </div>
+            </div>
+
+            <!-- Quick Investment Calculator in Header -->
+            <div class="flex items-center gap-3 bg-slate-800/90 border border-slate-700 rounded-xl px-3.5 py-2">
+                <div class="text-xs text-slate-400">
+                    <span class="block font-medium text-slate-300">客戶申購本金 (USD)</span>
+                    <span class="text-[11px] text-slate-500">最低 1 萬，累加 1 萬</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="adjustPrincipal(-10000)" class="w-7 h-7 rounded-lg bg-slate-700 hover:bg-slate-600 text-white flex items-center justify-center transition" title="減少 1 萬美元">
+                        <i class="fa-solid fa-minus text-xs"></i>
+                    </button>
+                    <input id="principalInput" type="number" min="10000" step="10000" value="50000" onchange="onPrincipalInputChange(this.value)"
+                        class="w-28 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-right font-mono font-bold text-emerald-400 text-sm focus:outline-none focus:border-indigo-500">
+                    <button onclick="adjustPrincipal(10000)" class="w-7 h-7 rounded-lg bg-slate-700 hover:bg-slate-600 text-white flex items-center justify-center transition" title="增加 1 萬美元">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+
+        <!-- Product Spec Summary Strip -->
+        <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <!-- Card 1: Annualized Coupon -->
+            <div class="glass-card rounded-2xl p-4 border-l-4 border-l-emerald-500">
+                <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                    <span>年化配息率</span>
+                    <i class="fa-solid fa-percent text-emerald-400"></i>
+                </div>
+                <div class="text-2xl font-black text-emerald-400 font-mono">10.96%</div>
+                <div class="text-xs text-slate-300 mt-1">
+                    月息約 <span class="font-mono text-emerald-300">0.9133%</span>
+                </div>
+                <div class="text-[11px] text-slate-400 mt-0.5">
+                    每月領 <span id="headerMonthlyCoupon" class="font-mono font-bold text-white">$456.67</span>
+                </div>
+            </div>
+
+            <!-- Card 2: Underlyings -->
+            <div class="glass-card rounded-2xl p-4 border-l-4 border-l-indigo-500">
+                <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                    <span>連結標的 (AI三巨頭)</span>
+                    <i class="fa-solid fa-microchip text-indigo-400"></i>
+                </div>
+                <div class="flex items-center gap-1.5 mt-1">
+                    <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold text-xs border border-emerald-500/30">NVDA</span>
+                    <span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono font-bold text-xs border border-blue-500/30">AVGO</span>
+                    <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono font-bold text-xs border border-amber-500/30">NOW</span>
+                </div>
+                <div class="text-[11px] text-slate-400 mt-2">
+                    進場：2026/10/15 收盤價
+                </div>
+            </div>
+
+            <!-- Card 3: Strike Price -->
+            <div class="glass-card rounded-2xl p-4 border-l-4 border-l-amber-500">
+                <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                    <span>轉換價 (Strike / K)</span>
+                    <i class="fa-solid fa-shield-halved text-amber-400"></i>
+                </div>
+                <div class="text-2xl font-black text-amber-400 font-mono">70%</div>
+                <div class="text-xs text-slate-300 mt-1">若觸發接股之成本價</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">相當於進場價打 7 折承接</div>
+            </div>
+
+            <!-- Card 4: EKI Barrier -->
+            <div class="glass-card rounded-2xl p-4 border-l-4 border-l-rose-500">
+                <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                    <span>下限價 KI (歐式 EKI)</span>
+                    <i class="fa-solid fa-bullseye text-rose-400"></i>
+                </div>
+                <div class="flex items-baseline gap-1.5">
+                    <span class="text-2xl font-black text-rose-400 font-mono">65%</span>
+                    <span class="text-xs px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold">EKI 期末觀察</span>
+                </div>
+                <div class="text-[11px] text-slate-300 mt-1">盤中跌破不算！僅看最後一天</div>
+            </div>
+
+            <!-- Card 5: KO Barrier & Memory -->
+            <div class="glass-card rounded-2xl p-4 border-l-4 border-l-sky-500">
+                <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                    <span>提前出場 KO (記憶型)</span>
+                    <i class="fa-solid fa-bolt text-sky-400"></i>
+                </div>
+                <div class="flex items-baseline gap-1.5">
+                    <span class="text-2xl font-black text-sky-400 font-mono">100%</span>
+                    <span class="text-xs px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold">記憶機制</span>
+                </div>
+                <div class="text-[11px] text-slate-300 mt-1">滿1個月起，每日觀察記憶</div>
+            </div>
+
+            <!-- Card 6: Tenor & Currency -->
+            <div class="glass-card rounded-2xl p-4 border-l-4 border-l-purple-500">
+                <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                    <span>天期 / 幣別</span>
+                    <i class="fa-regular fa-calendar-check text-purple-400"></i>
+                </div>
+                <div class="text-2xl font-black text-purple-400 font-mono">6M <span class="text-base font-sans text-slate-300">/ USD</span></div>
+                <div class="text-xs text-slate-300 mt-1">6個月總配息 <span class="font-mono text-emerald-300">5.48%</span></div>
+                <div class="text-[11px] text-slate-400 mt-0.5">滿期總息 <span id="headerTotalCoupon" class="font-mono font-bold text-white">$2,740</span></div>
+            </div>
+        </section>
+
+        <!-- Navigation Tabs -->
+        <nav class="flex flex-wrap gap-2 bg-slate-900/80 p-1.5 rounded-2xl border border-slate-800">
+            <button onclick="switchTab('simulator')" id="tab-simulator" class="tab-btn tab-active flex-1 min-w-[170px] py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition">
+                <i class="fa-solid fa-sliders"></i>
+                <span>1. 到期損益與 EKI 模擬器</span>
+            </button>
+            <button onclick="switchTab('memoryko')" id="tab-memoryko" class="tab-btn text-slate-400 hover:text-white hover:bg-slate-800/60 flex-1 min-w-[170px] py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition">
+                <i class="fa-solid fa-brain"></i>
+                <span>2. 「記憶型 KO」動態沙盒</span>
+            </button>
+            <button onclick="switchTab('proscons')" id="tab-proscons" class="tab-btn text-slate-400 hover:text-white hover:bg-slate-800/60 flex-1 min-w-[170px] py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition">
+                <i class="fa-solid fa-scale-balanced"></i>
+                <span>3. 優劣勢與關鍵機制拆解</span>
+            </button>
+            <button onclick="switchTab('salespitch')" id="tab-salespitch" class="tab-btn text-slate-400 hover:text-white hover:bg-slate-800/60 flex-1 min-w-[170px] py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition">
+                <i class="fa-solid fa-comments-dollar"></i>
+                <span>4. 營業員話術與客戶 QA</span>
+            </button>
+        </nav>
+
+        <!-- ==========================================
+             TAB 1: PAYOFF & EKI SIMULATOR
+             ========================================== -->
+        <section id="panel-simulator" class="space-y-6">
+            <!-- Key Concept Highlight Banner for Sales Rep -->
+            <div class="bg-gradient-to-r from-indigo-950/90 via-slate-900 to-indigo-950/90 border border-indigo-500/30 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="space-y-1">
+                    <div class="inline-flex items-center gap-2 text-xs font-bold text-indigo-300 bg-indigo-500/20 px-2.5 py-1 rounded-full">
+                        <i class="fa-solid fa-lightbulb text-amber-400"></i> 營業員必懂核心亮點：為什麼有「70% 轉換價」又有「65% EKI」？
+                    </div>
+                    <p class="text-sm text-slate-300 leading-relaxed">
+                        本商品採用 <strong class="text-white underline decoration-emerald-400">歐式下限價 (EKI 65%)</strong>，代表<strong class="text-emerald-300">前 6 個月盤中跌破 65% 完全不影響</strong>，只在「期末最後一天」觀察最差表現股票（WPS）的收盤價：
+                        只要期末收盤 <strong class="text-amber-300">≥ 65%</strong>（包含落在 65%~70% 之間），就<strong class="text-emerald-300">不會觸發 EKI、100% 保本拿回現金！</strong>只有期末收盤 <strong class="text-rose-400">&lt; 65%</strong> 時，才會啟動轉換，並以 <strong class="text-amber-300">70% 轉換價</strong>折算承接最差那檔股票。
+                    </p>
+                </div>
+                <div class="flex flex-wrap sm:flex-nowrap gap-2 shrink-0">
+                    <button onclick="setWpsPreset(105)" class="px-3 py-2 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/40 text-sky-300 text-xs font-bold transition">
+                        情境A: 漲破100% (KO)
+                    </button>
+                    <button onclick="setWpsPreset(82)" class="px-3 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition">
+                        情境B: 小跌至82% (安全)
+                    </button>
+                    <button onclick="setWpsPreset(67)" class="px-3 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold transition">
+                        情境C: 67% (EKI黃金緩衝)
+                    </button>
+                    <button onclick="setWpsPreset(56)" class="px-3 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 text-xs font-bold transition">
+                        情境D: 大跌至56% (接股)
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left Column: Interactive Slider & Payoff SVG Chart -->
+                <div class="lg:col-span-7 glass-card rounded-2xl p-5 sm:p-6 space-y-6">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-gauge-high text-indigo-400"></i>
+                                期末「最差表現標的 (WPS)」收盤價模擬
+                            </h2>
+                            <p class="text-xs text-slate-400">拖曳下方滑桿，即時查看客戶在期末不同股價水位下的本利和與損益</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-slate-400 block">期末最差標的價格比</span>
+                            <span id="wpsValueDisplay" class="text-3xl font-black font-mono text-emerald-400">82%</span>
+                        </div>
+                    </div>
+
+                    <!-- Slider Control -->
+                    <div class="space-y-2 pt-2">
+                        <input id="wpsSlider" type="range" min="30" max="130" step="1" value="82" oninput="updateSimulator(this.value)">
+                        <div class="flex justify-between text-[11px] font-mono text-slate-400 px-1">
+                            <span class="text-rose-400">30% (重挫)</span>
+                            <span class="text-rose-400 font-bold">65% (EKI線)</span>
+                            <span class="text-amber-400 font-bold">70% (轉換價)</span>
+                            <span class="text-emerald-400">85% (盤整)</span>
+                            <span class="text-sky-400 font-bold">100% (進場/KO價)</span>
+                            <span class="text-purple-400">130% (大漲)</span>
+                        </div>
+                    </div>
+
+                    <!-- Interactive SVG Payoff Diagram -->
+                    <div class="bg-slate-950/80 rounded-xl p-4 border border-slate-800">
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+                            <span>📊 FCN 期末總報酬率 vs 直接買股損益曲線圖</span>
+                            <div class="flex items-center gap-4">
+                                <span class="flex items-center gap-1.5"><span class="w-3 h-1 bg-indigo-400 inline-block rounded"></span> FCN 總報酬(含6個月配息)</span>
+                                <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 border-b border-dashed border-slate-400 inline-block"></span> 直接持有現股</span>
+                            </div>
+                        </div>
+                        <div class="w-full overflow-hidden">
+                            <svg id="payoffSvg" viewBox="0 0 600 290" class="w-full h-auto select-none">
+                                <!-- Background Grid & Zones -->
+                                <rect x="50" y="20" width="192.5" height="230" fill="rgba(244, 63, 94, 0.07)" />
+                                <rect x="242.5" y="20" width="27.5" height="230" fill="rgba(245, 158, 11, 0.14)" />
+                                <rect x="270" y="20" width="165" height="230" fill="rgba(16, 185, 129, 0.07)" />
+                                <rect x="435" y="20" width="145" height="230" fill="rgba(56, 189, 248, 0.07)" />
+
+                                <!-- Horizontal Reference Lines -->
+                                <!-- 0% Profit Line (100% Principal) at y=110 -->
+                                <line x1="50" y1="110" x2="580" y2="110" stroke="#475569" stroke-width="1" stroke-dasharray="4,4" />
+                                <text x="44" y="114" text-anchor="end" fill="#94a3b8" font-size="10" font-family="monospace">0%</text>
+
+                                <!-- +5.48% Max Return Line at y=94 -->
+                                <line x1="50" y1="94" x2="580" y2="94" stroke="#10b981" stroke-width="1" stroke-dasharray="2,3" />
+                                <text x="44" y="97" text-anchor="end" fill="#10b981" font-size="10" font-family="monospace">+5.5%</text>
+
+                                <!-- Vertical Barrier Lines -->
+                                <!-- 65% EKI Line: x = 50 + (65-30)*(550/100) = 50 + 35*5.5 = 242.5 -->
+                                <line x1="242.5" y1="20" x2="242.5" y2="250" stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="4,3" />
+                                <text x="238" y="34" text-anchor="end" fill="#fb7185" font-size="10" font-weight="bold">EKI 65%</text>
+
+                                <!-- 70% Strike Line: x = 50 + (70-30)*5.5 = 270 -->
+                                <line x1="270" y1="20" x2="270" y2="250" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,3" />
+                                <text x="274" y="34" text-anchor="start" fill="#fbbf24" font-size="10" font-weight="bold">轉換價 70%</text>
+
+                                <!-- 100% KO Line: x = 50 + (100-30)*5.5 = 435 -->
+                                <line x1="435" y1="20" x2="435" y2="250" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4,3" />
+                                <text x="439" y="34" text-anchor="start" fill="#38bdf8" font-size="10" font-weight="bold">KO 100%</text>
+
+                                <!-- Direct Stock Holding Line (30% -> -70% at y=250; 100% -> 0% at y=110; 130% -> +30% at y=50) -->
+                                <line x1="50" y1="250" x2="580" y2="54" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5,5" />
+
+                                <!-- FCN Payoff Curve -->
+                                <!-- For WPS >= 65% (x from 242.5 to 580): Return is flat +5.48% (y=99) -->
+                                <line x1="242.5" y1="99" x2="580" y2="99" stroke="#10b981" stroke-width="3.5" />
+                                <!-- Cliff at 65% EKI (from y=99 down to net return at 64.9%: (65/70 - 1) + 5.48% = -7.14% + 5.48% = -1.66% -> y=113.3) -->
+                                <line x1="242.5" y1="99" x2="242.5" y2="113.3" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="2,2" />
+                                <!-- Below 65% (x from 50 to 242.5): Return at 30% is (30/70 - 1) + 5.48% = -57.14% + 5.48% = -51.66% -> y = 110 + 51.66*2 = 213.3 -->
+                                <line x1="50" y1="213.3" x2="242.5" y2="113.3" stroke="#f43f5e" stroke-width="3.5" />
+
+                                <!-- Zone Labels -->
+                                <text x="145" y="242" text-anchor="middle" fill="#fda4af" font-size="10" font-weight="bold">跌破65%：70%轉換價接股</text>
+                                <text x="256" y="75" text-anchor="middle" fill="#fcd34d" font-size="9" font-weight="bold">黃金緩衝</text>
+                                <text x="352" y="242" text-anchor="middle" fill="#6ee7b7" font-size="10" font-weight="bold">70%~100%：安全領息保本</text>
+                                <text x="508" y="242" text-anchor="middle" fill="#7dd3fc" font-size="10" font-weight="bold">≥100%：提前KO出場</text>
+
+                                <!-- X-Axis Labels -->
+                                <line x1="50" y1="250" x2="580" y2="250" stroke="#334155" stroke-width="1.5" />
+                                <text x="50" y="268" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="monospace">30%</text>
+                                <text x="242.5" y="268" text-anchor="middle" fill="#fb7185" font-size="10" font-family="monospace">65%</text>
+                                <text x="270" y="268" text-anchor="middle" fill="#fbbf24" font-size="10" font-family="monospace">70%</text>
+                                <text x="435" y="268" text-anchor="middle" fill="#38bdf8" font-size="10" font-family="monospace">100%</text>
+                                <text x="580" y="268" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="monospace">130%</text>
+
+                                <!-- Dynamic Marker for Current WPS -->
+                                <line id="svgMarkerLine" x1="336" y1="20" x2="336" y2="250" stroke="#ffffff" stroke-width="1.5" />
+                                <circle id="svgStockPoint" cx="336" cy="146" r="5" fill="#64748b" stroke="#ffffff" stroke-width="1.5" />
+                                <circle id="svgFcnPoint" cx="336" cy="99" r="7" fill="#10b981" stroke="#ffffff" stroke-width="2" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Detailed Outcome Card & Share Conversion Calculator -->
+                <div class="lg:col-span-5 space-y-4">
+                    <!-- Dynamic Status Banner -->
+                    <div id="outcomeCard" class="glass-card rounded-2xl p-5 sm:p-6 border-2 border-emerald-500/50 transition-all">
+                        <div class="flex items-center justify-between mb-3">
+                            <span id="outcomeBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                ✅ 安全到期・100% 現金返還本金
+                            </span>
+                            <span class="text-xs font-mono text-slate-400">天期 6M 結算</span>
+                        </div>
+
+                        <h3 id="outcomeTitle" class="text-xl font-bold text-white mb-2">
+                            最差標的收在 82%（高於 70% 轉換價）
+                        </h3>
+                        <p id="outcomeDesc" class="text-sm text-slate-300 leading-relaxed mb-5">
+                            雖然最差股票下跌了 18%，但因為沒有跌破 65% EKI 下限價，客戶依然<strong class="text-emerald-300">拿回 100% 美元本金</strong>，加上完整 6 個月配息（5.48%），表現大幅擊敗直接持有現股！
+                        </p>
+
+                        <!-- Financial Breakdown Table -->
+                        <div class="bg-slate-900/90 rounded-xl p-4 space-y-3 border border-slate-800">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-slate-400">投入本金 (USD)</span>
+                                <span id="simPrincipal" class="font-mono font-bold text-white">$50,000.00</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-slate-400">累積配息收入 (6個月共 5.48%)</span>
+                                <span id="simCoupon" class="font-mono font-bold text-emerald-400">+$2,740.00</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-slate-400">期末本金贖回價值</span>
+                                <span id="simRedemption" class="font-mono font-bold text-white">$50,000.00 (100%)</span>
+                            </div>
+                            <div class="border-t border-slate-800 pt-3 flex justify-between items-center">
+                                <span class="text-sm font-bold text-slate-200">客戶期末總回收價值 (含息)</span>
+                                <div class="text-right">
+                                    <span id="simTotalValue" class="text-lg font-black font-mono text-emerald-400 block">$52,740.00</span>
+                                    <span id="simNetReturnPct" class="text-xs font-mono text-emerald-300">總報酬率：+5.48% (對比現股 -18.00%)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Share Conversion Simulator (Crucial when WPS < 65%) -->
+                    <div class="glass-card rounded-2xl p-5 border border-slate-800 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-sm font-bold text-amber-300 flex items-center gap-2">
+                                <i class="fa-solid fa-calculator"></i>
+                                萬一觸發接股（期末 &lt; 65%）：承接股數試算器
+                            </h4>
+                            <span class="text-[11px] font-mono text-slate-400">公式：本金 ÷ (期初價 × 70%)</span>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            許多客戶誤以為「跌到 60% 就是虧損 40%」，其實不對！因為客戶是用 <strong class="text-amber-300">70% 轉換價（打7折）</strong>去買進最差股票，所以實際股票市值為 <code class="text-indigo-300">期末價 ÷ 70%</code>：
+                        </p>
+                        <div class="grid grid-cols-3 gap-2 pt-1">
+                            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+                                <label class="text-[11px] text-slate-400 block mb-1">假設最差標的</label>
+                                <select id="mockStockSelect" onchange="updateShareCalc()" class="w-full bg-slate-800 text-white text-xs font-bold rounded-lg px-2 py-1.5 border border-slate-700 focus:outline-none">
+                                    <option value="140" selected>NVDA (假設$140)</option>
+                                    <option value="180">AVGO (假設$180)</option>
+                                    <option value="950">NOW (假設$950)</option>
+                                </select>
+                            </div>
+                            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+                                <label class="text-[11px] text-slate-400 block mb-1">70% 轉換成本價</label>
+                                <div id="convStrikePrice" class="font-mono font-bold text-amber-400 text-sm pt-1">$98.00 /股</div>
+                            </div>
+                            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+                                <label class="text-[11px] text-slate-400 block mb-1">折算承接股數</label>
+                                <div id="convShareCount" class="font-mono font-bold text-indigo-300 text-sm pt-1">510 股 + 零股現金</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 2: MEMORY KO SANDBOX
+             ========================================== -->
+        <section id="panel-memoryko" class="hidden space-y-6">
+            <div class="glass-card rounded-2xl p-5 sm:p-6 space-y-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                    <div>
+                        <span class="text-xs font-bold uppercase px-2.5 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">
+                            滿 1 個月後開始・每日觀察「記憶」
+                        </span>
+                        <h2 class="text-xl font-bold text-white mt-2">
+                            🧠 什麼是「記憶型 KO (Memory Autocall)」？互動演示沙盒
+                        </h2>
+                        <p class="text-sm text-slate-300 mt-1">
+                            傳統無記憶 KO 要求 3 檔股票必須在<strong class="text-rose-300">「同一天」</strong>全部高於 100% 才能出場；但本商品具備<strong class="text-sky-300">「記憶機制」</strong>——滿 1 個月後，只要某檔股票在任一觀察日收盤 ≥ 100%，系統就會永久打勾「記憶」起來，就算隔天跌回 90% 也算過關！當 3 檔先後都被記憶時，立即提前出場返還 100% 本金與當期配息。
+                        </p>
+                    </div>
+                    <div class="flex gap-2 shrink-0">
+                        <button onclick="loadKoScenario('staggered')" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-lg">
+                            ✨ 演示：錯開達標也能出場 (第3個月KO)
+                        </button>
+                        <button onclick="loadKoScenario('holdToMaturity')" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition">
+                            演示：1檔未達標 (領滿6個月配息)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Interactive Matrix: Click cells to toggle >=100% -->
+                <div class="space-y-2">
+                    <div class="text-xs text-slate-400 flex items-center justify-between">
+                        <span>👇 點擊下方表格中的月份格子，切換該股票當月是否有任一天收盤 <strong class="text-sky-300">≥ 100% 進場價</strong>：</span>
+                        <span class="text-amber-300 font-medium"><i class="fa-solid fa-lock"></i> 第 1 個月為閉鎖期 (Non-call 1M)，不觀察 KO</span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-800 text-xs text-slate-400">
+                                    <th class="py-3 px-4 w-44">連結標的</th>
+                                    <th class="py-3 px-3 text-center bg-slate-900/60 text-slate-500">第 1 個月<br><span class="text-[10px]">(閉鎖不觀察KO)</span></th>
+                                    <th class="py-3 px-3 text-center">第 2 個月<br><span class="text-[10px] text-sky-400">每日觀察</span></th>
+                                    <th class="py-3 px-3 text-center">第 3 個月<br><span class="text-[10px] text-sky-400">每日觀察</span></th>
+                                    <th class="py-3 px-3 text-center">第 4 個月<br><span class="text-[10px] text-sky-400">每日觀察</span></th>
+                                    <th class="py-3 px-3 text-center">第 5 個月<br><span class="text-[10px] text-sky-400">每日觀察</span></th>
+                                    <th class="py-3 px-3 text-center">第 6 個月<br><span class="text-[10px] text-sky-400">期末觀察</span></th>
+                                    <th class="py-3 px-4 text-center">記憶狀態</th>
+                                </tr>
+                            </thead>
+                            <tbody id="koMatrixBody" class="divide-y divide-slate-800/70 text-sm">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- KO Result Summary Box -->
+                <div id="koSummaryBanner" class="bg-slate-900/90 border border-sky-500/40 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <div id="koStatusTag" class="inline-flex items-center gap-1.5 text-xs font-bold text-sky-300 bg-sky-500/20 px-2.5 py-0.5 rounded-full">
+                            🎉 觸發記憶型提前出場 (Memory KO)
+                        </div>
+                        <h3 id="koResultTitle" class="text-lg font-bold text-white">
+                            於「第 3 個月」3 檔標的皆完成記憶，商品提前出場！
+                        </h3>
+                        <p id="koResultExplanation" class="text-xs text-slate-300 leading-relaxed">
+                            注意看！在第 3 個月時，雖然 NVDA 已經跌回 94%、AVGO 跌回 91%，但因為它們分別在第 2 個月與第 3 個月曾經觸及 100% 被系統「記憶」，所以當 NOW 在第 3 個月觸及 101% 時，三檔全數過關，立刻拿回 100% 本金 + 3 個月配息！
+                        </p>
+                    </div>
+                    <div class="bg-slate-950 px-4 py-3 rounded-xl border border-slate-800 shrink-0 text-right min-w-[210px]">
+                        <span class="text-xs text-slate-400 block">該情境累積領取配息</span>
+                        <span id="koTotalCouponUsd" class="text-2xl font-black font-mono text-emerald-400">$1,370.00</span>
+                        <span id="koTotalCouponPct" class="text-xs font-mono text-slate-400 block">實拿報酬率：+2.74% (共領 3 期)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 3: PROS, CONS & MECHANISM DEEP DIVE
+             ========================================== -->
+        <section id="panel-proscons" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Pros Column -->
+                <div class="glass-card rounded-2xl p-6 border-t-4 border-t-emerald-500 space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                            <i class="fa-solid fa-thumbs-up text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">本檔 FCN 四大核心優勢 (Pros)</h3>
+                            <p class="text-xs text-slate-400">向客戶介紹時的四大亮點切入角度</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-emerald-300 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-xs flex items-center justify-center">1</span>
+                                歐式 EKI 65% 極深防護（不怕盤中震盪洗盤）
+                            </h4>
+                            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                                市面上許多 FCN 是美式觀察 (AKI)，只要 6 個月內任一天跌破 65% 就破網；本商品為 <strong>EKI (European Knock-In)</strong>，<strong>只看最後一天到期日收盤價</strong>。就算期中遇到財報大跌 40%，只要到期日漲回 65% 以上，依然 100% 保本出場。
+                            </p>
+                        </div>
+
+                        <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-emerald-300 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-xs flex items-center justify-center">2</span>
+                                每日記憶型 KO（大幅提高提前出場機率）
+                            </h4>
+                            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                                滿 1 個月後<strong>天天觀察</strong>且具備<strong>記憶功能</strong>。科技股輪動快，NVDA、AVGO、NOW 不需要同一天大漲，只要各自在不同日子曾經回到進場價 (100%) 一次，就能順利提前落袋為安。
+                            </p>
+                        </div>
+
+                        <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-emerald-300 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-xs flex items-center justify-center">3</span>
+                                盤整、微幅下跌也能賺 10.96% 年化高息
+                            </h4>
+                            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                                直接買美股必須「上漲」才賺錢；透過 FCN，即便大盤走平、甚至最差標的下跌 30%~35%，客戶依然每月穩定領取年化 10.96% 的固定配息，將「時間價值」與「波動度」轉化為現金流。
+                            </p>
+                        </div>
+
+                        <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-emerald-300 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-xs flex items-center justify-center">4</span>
+                                連結 AI 軟硬體龍頭 + 1萬美元親民門檻
+                            </h4>
+                            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                                輝達 (NVDA)、博通 (AVGO)、ServiceNow (NOW) 皆為 AI 算力與企業軟體絕對龍頭。萬一極端行情觸發接股，也是用進場價 <strong>7 折 (70% 轉換價)</strong> 低接優質龍頭股，且最低 1 萬美元即可配置。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cons & Risks Column -->
+                <div class="glass-card rounded-2xl p-6 border-t-4 border-t-rose-500 space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400">
+                            <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">本檔 FCN 四大劣勢與風險提示 (Cons & Risks)</h3>
+                            <p class="text-xs text-slate-400">合規必講＆幫助客戶建立正確預期的關鍵風險</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-rose-300 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-rose-500/20 text-xs flex items-center justify-center">1</span>
+                                「木桶效應」最差標的決定損益 (Worst-of Risk)
+                            </h4>
+                            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                                連結 3 檔股票時，期末是否破網接股，完全取決於<strong>表現最差的那 1 檔 (WPS)</strong>。即便 NVDA 與 AVGO 大漲 30%，只要 NOW 一檔在期末暴跌超過 35%（收低於 65%），整筆契約仍會轉換承接 NOW 的股票。
+                            </p>
+                        </div>
+
+                        <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-rose-300 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-rose-500/20 text-xs flex items-center justify-center">2</span>
+                                上方獲利封頂，放棄股票暴漲紅利 (Upside Capped)
+                            </h4>
+                            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                                FCN 本質是「賣出賣權 (Short Put)」收權利金。若進場後 AI 類股狂飆 40%，客戶最多就是滿 1 個月後觸發 KO 提前出場，只領到約 1 個月配息（約 0.913%）與本金，無法參與股票大漲的資本利得。
+                            </p>
+                        </div>
+
+                        <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-rose-300 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-rose-500/20 text-xs flex items-center justify-center">3</span>
+                                非保本商品，大空頭時有接股與跌價損失風險
+                            </h4>
+                            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                                若期末最差股票跌破 65% EKI，客戶必須以 70% 轉換價承接股票。若遇到系統性崩盤（例如跌到剩 35%），即使有 7 折保護與 5.48% 配息補貼，帳面仍會出現約 44.5% 的淨浮虧。
+                            </p>
+                        </div>
+
+                        <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-rose-300 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-rose-500/20 text-xs flex items-center justify-center">4</span>
+                                提前出場之「再投資風險」與發行機構信用風險
+                            </h4>
+                            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                                若滿 1 個月立即 KO 出場，年化雖然是 10.96%，但實際計息天數僅 1 個月，資金退回後需重新尋找投資標的；此外需承擔發行機構違約風險、次級市場提前贖回折價與美元匯率風險。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparison Table: Why THIS FCN structure is superior -->
+            <div class="glass-card rounded-2xl p-6">
+                <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-table-columns text-indigo-400"></i>
+                    結構條件比一比：為什麼這檔 SNINR202610013 的條件對客戶相對友善？
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-700 text-slate-400 bg-slate-900/60">
+                                <th class="py-3 px-4">結構維度</th>
+                                <th class="py-3 px-4 text-emerald-300 font-bold">本商品 (SNINR202610013)</th>
+                                <th class="py-3 px-4 text-slate-400">一般常見高風險 FCN</th>
+                                <th class="py-3 px-4">對客戶的實質影響（營業員解說重點）</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800 text-slate-300">
+                            <tr>
+                                <td class="py-3 px-4 font-bold text-white">KI 觀察方式</td>
+                                <td class="py-3 px-4 text-emerald-400 font-bold">歐式 EKI (僅期末最後一天觀察)</td>
+                                <td class="py-3 px-4 text-slate-400">美式 AKI (期間每日盤中/收盤觀察)</td>
+                                <td class="py-3 px-4">期間遇到突發利空閃崩跌破 65% <strong>完全不會生效</strong>，只要到期日拉回 65% 以上就全身而退！</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 font-bold text-white">轉換價 vs KI 價</td>
+                                <td class="py-3 px-4 text-emerald-400 font-bold">轉換價 70% / EKI 65% (雙層防護)</td>
+                                <td class="py-3 px-4 text-slate-400">轉換價 80% / 無 KI 或 AKI 70%</td>
+                                <td class="py-3 px-4">期末在 65%~70% 之間享「歐式未敲入保本緩衝」；真跌破 65% 時則以 7 折價算股數。</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 font-bold text-white">KO 提前出場機制</td>
+                                <td class="py-3 px-4 text-emerald-400 font-bold">滿1M後，每日觀察 + 「記憶型」</td>
+                                <td class="py-3 px-4 text-slate-400">每月僅觀察1天 + 無記憶 (需同日達標)</td>
+                                <td class="py-3 px-4">3 檔股票各自在不同天漲過 100% 即可累計過關，資金回收速度與確定性高出許多。</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 font-bold text-white">合約天期</td>
+                                <td class="py-3 px-4 text-emerald-400 font-bold">6 個月 (短天期)</td>
+                                <td class="py-3 px-4 text-slate-400">12 個月 (長天期)</td>
+                                <td class="py-3 px-4">科技股能見度以半年最理想，資金不會被長期綁死，夜長夢多風險較低。</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 4: SALES REP PITCH & Q&A CHEAT SHEET
+             ========================================== -->
+        <section id="panel-salespitch" class="hidden space-y-6">
+            <!-- Target Client Persona & One-Click Copy Line Pitch -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-5 glass-card rounded-2xl p-6 space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-user-check text-indigo-400"></i>
+                        哪些客戶最適合這檔商品？（精準名單篩選）
+                    </h3>
+                    <ul class="space-y-3 text-sm text-slate-300">
+                        <li class="flex items-start gap-2.5 bg-slate-900/70 p-3.5 rounded-xl border border-slate-800">
+                            <i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i>
+                            <div>
+                                <strong class="text-white block">覺得 AI 龍頭股太貴、不敢追高但想低接的客戶</strong>
+                                <span class="text-xs text-slate-400">「現在追高怕套牢，不如先領 10.96% 年化配息；萬一半年後大跌超過 35%，剛好用 7 折價把 NVDA/AVGO/NOW 買進來！」</span>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-2.5 bg-slate-900/70 p-3.5 rounded-xl border border-slate-800">
+                            <i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i>
+                            <div>
+                                <strong class="text-white block">手握美元定存即將到期、尋求更高收益的客戶</strong>
+                                <span class="text-xs text-slate-400">在降息循環下美元定存利率下滑，透過 6 個月短天期、具備 65% EKI 深度保護的 FCN 提升美元現金流。</span>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-2.5 bg-slate-900/70 p-3.5 rounded-xl border border-slate-800">
+                            <i class="fa-solid fa-circle-xmark text-rose-400 mt-1"></i>
+                            <div>
+                                <strong class="text-rose-300 block">不適合的客戶（請務必避開）</strong>
+                                <span class="text-xs text-slate-400">完全無法承受本金波動之保守型客戶、短期內有絕對資金動用需求者、或極度看空 AI 半導體將崩盤超過 40% 的投資人。</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Copyable Line / Message Templates -->
+                <div class="lg:col-span-7 glass-card rounded-2xl p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-brands fa-line text-emerald-400 text-xl"></i>
+                                一鍵複製：給客戶的 LINE 專業提案摘要話術
+                            </h3>
+                            <p class="text-xs text-slate-400">已自動帶入您上方設定的本金試算數字，可直接複製貼給客戶並附上警語</p>
+                        </div>
+                        <button onclick="copyPitchText()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg transition">
+                            <i class="fa-regular fa-copy"></i> 複製 LINE 話術
+                        </button>
+                    </div>
+
+                    <textarea id="pitchTextarea" rows="11" readonly class="w-full bg-slate-950 text-slate-200 text-xs sm:text-sm font-sans leading-relaxed p-4 rounded-xl border border-slate-800 focus:outline-none"></textarea>
+                </div>
+            </div>
+
+            <!-- Interactive FAQ / Objection Handling -->
+            <div class="glass-card rounded-2xl p-6 space-y-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-shield-heart text-amber-400"></i>
+                    客戶最常問的 4 個尖銳問題（營業員標準應對指南）
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2">
+                        <div class="text-sm font-bold text-amber-300">Q1：「如果中間第 3 個月股災，NVDA 一度跌了 40%（跌到 60%），我是不是就破網要接股票了？」</div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            <strong class="text-emerald-400">💡 營業員回答：</strong>「完全不會！這就是我們挑這檔『歐式 EKI (65%)』最大的優勢。歐式代表<strong>盤中跟期中怎麼震盪都不算數</strong>，我們只看 6 個月到期最後一天的收盤價！只要最後一天它漲回 65% 以上，中間跌再深都跟您無關，一樣 100% 拿回美元本金加全額利息。」
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2">
+                        <div class="text-sm font-bold text-amber-300">Q2：「轉換價 70% 跟 KI 下限價 65% 差在哪？如果最後一天收在 68% 會怎樣？」</div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            <strong class="text-emerald-400">💡 營業員回答：</strong>「收在 68% 您一樣<strong>100% 保本拿回現金</strong>！因為接股票的前提是『最後一天跌破 65% EKI』。68% 並沒有跌破 65%，所以安全過關！只有當最後一天收低於 65%（例如收在 60%）時，才會啟動接股，而且是用『70% 轉換價』（幫您打 7 折）去計算給您多少股數。」
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2">
+                        <div class="text-sm font-bold text-amber-300">Q3：「這 3 檔股票要同時漲超過 100% 才能提前出場嗎？會不會很難？」</div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            <strong class="text-emerald-400">💡 營業員回答：</strong>「不用同一天！這檔有<strong>『每日觀察＋記憶機制』</strong>。滿 1 個月後天天觀察，比如這個禮拜 NVDA 漲回 100%，系統就幫 NVDA 蓋章記憶起來；下個月換 AVGO 跟 NOW 漲回 100%，就算那時候 NVDA 又跌回 92%，因為三檔都先後蓋過章了，當下就立刻提前出場把本金跟利息還給您！」
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2">
+                        <div class="text-sm font-bold text-amber-300">Q4：「萬一真的不幸跌破 65% 接到股票，我該怎麼處理？」</div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            <strong class="text-emerald-400">💡 營業員回答：</strong>「我們連結的 NVDA、AVGO、NOW 都是 AI 產業最核心的龍頭股。萬一接到股票，第一、您的持股成本已經是進場價打 7 折（70%轉換價）；第二、您這半年還領了 5.48% 的配息當作安全墊，實質持有成本相當於進場價的 <strong>64.5% 左右</strong>。您可以選擇在美股帳戶長期持有等待反彈，或分批賣出。」
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Custom Toast Notification (No alert() used) -->
+    <div id="toastBox" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 border border-emerald-400/30">
+            <i class="fa-solid fa-circle-check"></i>
+            <span id="toastMsg" class="text-sm font-bold">已複製到剪貼簿！</span>
+        </div>
+    </div>
+
+    <script>
+        // Product Constants (SNINR202610013)
+        const PRODUCT = {
+            code: 'SNINR202610013',
+            tradeDate: '2026/10/15',
+            underlyings: ['NVDA', 'AVGO', 'NOW'],
+            tenorMonths: 6,
+            annualCouponRate: 0.1096, // 10.96%
+            monthlyCouponRate: 0.1096 / 12, // ~0.91333%
+            total6MCouponRate: 0.1096 * 0.5, // 5.48%
+            strikePct: 70, // 70%
+            ekiPct: 65,    // 65% European KI
+            koPct: 100     // 100% Memory KO after 1M
+        };
+
+        // Application State
+        let state = {
+            principal: 50000,
+            wpsFinalPct: 82,
+            // Memory KO Sandbox Matrix: 3 stocks x 6 months (boolean: did it touch >=100% in that month?)
+            // Month 1 is non-call period (index 0)
+            koMatrix: {
+                NVDA: [true, true, false, false, false, false],
+                AVGO: [false, false, true, false, false, false],
+                NOW:  [false, false, true, true, false, false]
+            }
+        };
+
+        // Format USD helper
+        function formatUSD(num) {
+            return '$' + Number(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            const tabs = ['simulator', 'memoryko', 'proscons', 'salespitch'];
+            tabs.forEach(t => {
+                const panel = document.getElementById('panel-' + t);
+                const btn = document.getElementById('tab-' + t);
+                if (t === tabId) {
+                    panel.classList.remove('hidden');
+                    btn.classList.add('tab-active');
+                    btn.classList.remove('text-slate-400', 'hover:text-white', 'hover:bg-slate-800/60');
+                } else {
+                    panel.classList.add('hidden');
+                    btn.classList.remove('tab-active');
+                    btn.classList.add('text-slate-400', 'hover:text-white', 'hover:bg-slate-800/60');
+                }
+            });
+        }
+
+        // Adjust Principal in increments of $10,000
+        function adjustPrincipal(delta) {
+            let nextVal = state.principal + delta;
+            if (nextVal < 10000) nextVal = 10000;
+            state.principal = nextVal;
+            document.getElementById('principalInput').value = state.principal;
+            refreshAllCalculations();
+        }
+
+        function onPrincipalInputChange(val) {
+            let parsed = parseInt(val, 10);
+            if (isNaN(parsed) || parsed < 10000) {
+                parsed = 10000;
+            } else {
+                // Round to nearest 10,000 as required by product spec
+                parsed = Math.round(parsed / 10000) * 10000;
+            }
+            state.principal = parsed;
+            document.getElementById('principalInput').value = state.principal;
+            refreshAllCalculations();
+        }
+
+        // Set preset WPS value on Tab 1
+        function setWpsPreset(val) {
+            state.wpsFinalPct = val;
+            document.getElementById('wpsSlider').value = val;
+            updateSimulator(val);
+        }
+
+        // Update Tab 1 Simulator
+        function updateSimulator(val) {
+            const wps = parseFloat(val);
+            state.wpsFinalPct = wps;
+
+            const wpsDisplay = document.getElementById('wpsValueDisplay');
+            wpsDisplay.textContent = wps + '%';
+
+            const P = state.principal;
+            const totalCoupon = P * PRODUCT.total6MCouponRate; // 6 months full coupon for maturity simulation
+
+            const outcomeCard = document.getElementById('outcomeCard');
+            const outcomeBadge = document.getElementById('outcomeBadge');
+            const outcomeTitle = document.getElementById('outcomeTitle');
+            const outcomeDesc = document.getElementById('outcomeDesc');
+            const simPrincipal = document.getElementById('simPrincipal');
+            const simCoupon = document.getElementById('simCoupon');
+            const simRedemption = document.getElementById('simRedemption');
+            const simTotalValue = document.getElementById('simTotalValue');
+            const simNetReturnPct = document.getElementById('simNetReturnPct');
+
+            let redemptionValue = P;
+            let fcnNetReturnPct = 5.48;
+            const directStockReturnPct = wps - 100;
+
+            if (wps >= 100) {
+                // Early KO or Maturity >= 100%
+                wpsDisplay.className = 'text-3xl font-black font-mono text-sky-400';
+                outcomeCard.className = 'glass-card rounded-2xl p-5 sm:p-6 border-2 border-sky-500/60 transition-all';
+                outcomeBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30';
+                outcomeBadge.textContent = '🚀 觸發 KO 出場條件 (≥ 100%)';
+                outcomeTitle.textContent = `最差標的收在 ${wps}%（全數標的高於 100% 進場價）`;
+                outcomeDesc.innerHTML = `所有連結標的皆表現強勁並超越進場價，觸發<strong>提前出場 (KO) 或到期安全贖回</strong>！客戶 100% 拿回美元本金與配息。（註：若於期中提前 KO，則領取至出場當期之配息）`;
+            } else if (wps >= 70) {
+                // Safe Zone (70% <= WPS < 100%)
+                wpsDisplay.className = 'text-3xl font-black font-mono text-emerald-400';
+                outcomeCard.className = 'glass-card rounded-2xl p-5 sm:p-6 border-2 border-emerald-500/60 transition-all';
+                outcomeBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+                outcomeBadge.textContent = '✅ 安全到期・100% 現金返還本金';
+                outcomeTitle.textContent = `最差標的收在 ${wps}%（高於 70% 轉換價）`;
+                outcomeDesc.innerHTML = `雖然最差股票下跌了 <strong>${100 - wps}%</strong>，但完全在安全防護網內！客戶到期 <strong class="text-emerald-300">100% 拿回美元本金</strong>，並領滿 6 個月高配息 (+5.48%)，大幅勝過直接買股！`;
+            } else if (wps >= 65) {
+                // Golden EKI Buffer Zone (65% <= WPS < 70%)
+                wpsDisplay.className = 'text-3xl font-black font-mono text-amber-400';
+                outcomeCard.className = 'glass-card rounded-2xl p-5 sm:p-6 border-2 border-amber-500/70 transition-all';
+                outcomeBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40';
+                outcomeBadge.textContent = '🛡️ 歐式 EKI 黃金緩衝區・依然 100% 保本！';
+                outcomeTitle.textContent = `最差標的收在 ${wps}%（低於70%轉換價，但未破65% EKI）`;
+                outcomeDesc.innerHTML = `<strong class="text-amber-300">這就是 EKI 65% 的價值所在！</strong>雖然最差標的收在 ${wps}%（低於 70% 轉換價），但因為期末<strong>沒有跌破 65% 下限價</strong>，所以<strong>不觸發接股</strong>！客戶依然 <strong class="text-emerald-300">100% 拿回現金本金 + 5.48% 全額配息</strong>！`;
+            } else {
+                // Knock-In Triggered (WPS < 65%) -> Physical Delivery at 70% Strike
+                wpsDisplay.className = 'text-3xl font-black font-mono text-rose-400';
+                outcomeCard.className = 'glass-card rounded-2xl p-5 sm:p-6 border-2 border-rose-500/70 transition-all';
+                outcomeBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40';
+                outcomeBadge.textContent = '⚠️ 期末跌破 65% EKI・以 70% 轉換價承接股票';
+                outcomeTitle.textContent = `最差標的收在 ${wps}%（跌破 65% EKI，啟動低接轉換）`;
+
+                // Redemption market value = Principal * (WPS / 70)
+                redemptionValue = P * (wps / PRODUCT.strikePct);
+                const principalRatioPct = (wps / PRODUCT.strikePct) * 100;
+                fcnNetReturnPct = (principalRatioPct - 100) + 5.48;
+
+                outcomeDesc.innerHTML = `期末最差標的收低於 65%，觸發歐式 EKI。客戶將以 <strong class="text-amber-300">70% 轉換價（打7折）</strong>承接最差那檔股票。承接之股票市值約為本金的 <strong>${principalRatioPct.toFixed(2)}%</strong>，加上已領取的 <strong>5.48% 配息</strong>補貼，總表現仍比直接持有現股（${directStockReturnPct.toFixed(2)}%）少虧約 <strong>${(fcnNetReturnPct - directStockReturnPct).toFixed(2)}%</strong>！`;
+            }
+
+            const totalFinalValue = redemptionValue + totalCoupon;
+
+            simPrincipal.textContent = formatUSD(P);
+            simCoupon.textContent = '+' + formatUSD(totalCoupon);
+            simRedemption.textContent = `${formatUSD(redemptionValue)} (${((redemptionValue / P) * 100).toFixed(1)}%)`;
+            simTotalValue.textContent = formatUSD(totalFinalValue);
+            simTotalValue.className = fcnNetReturnPct >= 0
+                ? 'text-lg font-black font-mono text-emerald-400 block'
+                : 'text-lg font-black font-mono text-rose-400 block';
+
+            const sign = fcnNetReturnPct >= 0 ? '+' : '';
+            const stockSign = directStockReturnPct >= 0 ? '+' : '';
+            simNetReturnPct.textContent = `FCN 含息總報酬：${sign}${fcnNetReturnPct.toFixed(2)}% (對比直接買股 ${stockSign}${directStockReturnPct.toFixed(2)}%)`;
+            simNetReturnPct.className = fcnNetReturnPct >= 0 ? 'text-xs font-mono text-emerald-300' : 'text-xs font-mono text-rose-300';
+
+            // Update SVG Dynamic Marker
+            // X maps 30%..130% to 50..580 (width 530, Wait: earlier lines used 5.5 per 1% from 50: 50 + (wps-30)*5.3? Let's match exact coordinates!)
+            // In SVG: 65% is at x=242.5, 70% is at x=270, 100% is at x=435 -> scale is (w - 30) * 5.5 + 50 (for 30% to 126.3%)
+            const svgX = Math.min(580, Math.max(50, 50 + (wps - 30) * 5.5));
+            // Direct stock Y: 100% is y=110, 30% is y=250 -> y = 110 + (100 - wps) * 2
+            const stockY = 110 + (100 - wps) * 2;
+            // FCN Y: if wps >= 65 -> y = 99 (+5.48%). If wps < 65 -> y = 110 - fcnNetReturnPct * 2
+            const fcnY = wps >= 65 ? 99 : (110 - fcnNetReturnPct * 2);
+
+            document.getElementById('svgMarkerLine').setAttribute('x1', svgX);
+            document.getElementById('svgMarkerLine').setAttribute('x2', svgX);
+            document.getElementById('svgStockPoint').setAttribute('cx', svgX);
+            document.getElementById('svgStockPoint').setAttribute('cy', stockY);
+
+            const fcnCircle = document.getElementById('svgFcnPoint');
+            fcnCircle.setAttribute('cx', svgX);
+            fcnCircle.setAttribute('cy', fcnY);
+            fcnCircle.setAttribute('fill', wps >= 65 ? '#10b981' : '#f43f5e');
+
+            updateShareCalc();
+        }
+
+        // Update Share Conversion Calculator
+        function updateShareCalc() {
+            const initialPrice = parseFloat(document.getElementById('mockStockSelect').value);
+            const strikePrice = initialPrice * (PRODUCT.strikePct / 100);
+            const exactShares = state.principal / strikePrice;
+            const wholeShares = Math.floor(exactShares);
+            const fractionalShares = exactShares - wholeShares;
+            // Fractional shares are settled in cash at final price
+            const finalStockPrice = initialPrice * (state.wpsFinalPct / 100);
+            const fractionalCash = fractionalShares * finalStockPrice;
+
+            document.getElementById('convStrikePrice').textContent = `$${strikePrice.toFixed(2)} /股`;
+            document.getElementById('convShareCount').textContent = `${wholeShares} 股 + 零股金 $${fractionalCash.toFixed(0)}`;
+        }
+
+        // Render & Calculate Tab 2 Memory KO Matrix
+        function renderKoMatrix() {
+            const tbody = document.getElementById('koMatrixBody');
+            tbody.innerHTML = '';
+
+            // Determine when each stock first gets "remembered" (only from Month 2 onwards, i.e., index >= 1)
+            const firstMemoryMonth = {};
+            PRODUCT.underlyings.forEach(sym => {
+                firstMemoryMonth[sym] = null;
+                for (let m = 1; m < 6; m++) {
+                    if (state.koMatrix[sym][m]) {
+                        firstMemoryMonth[sym] = m + 1; // 1-based month number (2..6)
+                        break;
+                    }
+                }
+            });
+
+            // Determine overall Autocall (KO) month: when ALL 3 stocks have a firstMemoryMonth
+            const allRemembered = PRODUCT.underlyings.every(sym => firstMemoryMonth[sym] !== null);
+            const koMonth = allRemembered
+                ? Math.max(...PRODUCT.underlyings.map(sym => firstMemoryMonth[sym]))
+                : null;
+
+            const badgeColors = {
+                NVDA: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+                AVGO: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+                NOW:  'bg-amber-500/20 text-amber-300 border-amber-500/30'
+            };
+
+            PRODUCT.underlyings.forEach(sym => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-800/40 transition';
+
+                // Stock Name Cell
+                const tdName = document.createElement('td');
+                tdName.className = 'py-3.5 px-4 font-bold';
+                tdName.innerHTML = `<span class="px-2.5 py-1 rounded border font-mono text-xs ${badgeColors[sym]}">${sym}</span>`;
+                tr.appendChild(tdName);
+
+                // 6 Month Cells
+                for (let m = 0; m < 6; m++) {
+                    const td = document.createElement('td');
+                    td.className = 'py-3 px-2 text-center';
+                    const isAbove100 = state.koMatrix[sym][m];
+                    const monthNum = m + 1;
+
+                    if (m === 0) {
+                        // Month 1 Non-call period
+                        td.innerHTML = `
+                            <div class="inline-flex flex-col items-center px-2.5 py-1.5 rounded-lg bg-slate-900 text-slate-500 border border-slate-800 text-xs">
+                                <span>閉鎖期</span>
+                                <span class="text-[10px]">不觀察KO</span>
+                            </div>
+                        `;
+                    } else {
+                        const isRememberedHere = firstMemoryMonth[sym] !== null && monthNum >= firstMemoryMonth[sym];
+                        const isFirstHit = firstMemoryMonth[sym] === monthNum;
+
+                        let btnClass = '';
+                        let statusHtml = '';
+
+                        if (isAbove100) {
+                            btnClass = 'bg-sky-500/25 border-sky-400 text-sky-200 hover:bg-sky-500/35';
+                            statusHtml = `<span class="font-bold text-xs">≥ 100%</span><span class="text-[10px] text-sky-300 block">${isFirstHit ? '🔒 觸發記憶!' : '✅ 已記憶'}</span>`;
+                        } else if (isRememberedHere) {
+                            btnClass = 'bg-indigo-500/20 border-indigo-400/50 text-indigo-200 hover:bg-indigo-500/30';
+                            statusHtml = `<span class="text-xs text-slate-300">&lt; 100%</span><span class="text-[10px] text-indigo-300 font-bold block">🧠 延續記憶過關</span>`;
+                        } else {
+                            btnClass = 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800';
+                            statusHtml = `<span class="text-xs">&lt; 100%</span><span class="text-[10px] text-slate-500 block">未達標</span>`;
+                        }
+
+                        td.innerHTML = `
+                            <button onclick="toggleKoCell('${sym}', ${m})" class="w-full max-w-[105px] py-1.5 px-2 rounded-xl border transition ${btnClass}">
+                                ${statusHtml}
+                            </button>
+                        `;
+                    }
+                    tr.appendChild(td);
+                }
+
+                // Memory Status Cell
+                const tdStatus = document.createElement('td');
+                tdStatus.className = 'py-3 px-4 text-center';
+                if (firstMemoryMonth[sym] !== null) {
+                    tdStatus.innerHTML = `<span class="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold">✅ 第${firstMemoryMonth[sym]}月已記憶</span>`;
+                } else {
+                    tdStatus.innerHTML = `<span class="px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold">⏳ 尚未達標</span>`;
+                }
+                tr.appendChild(tdStatus);
+
+                tbody.appendChild(tr);
+            });
+
+            // Update KO Summary Banner
+            const tag = document.getElementById('koStatusTag');
+            const title = document.getElementById('koResultTitle');
+            const exp = document.getElementById('koResultExplanation');
+            const usdEl = document.getElementById('koTotalCouponUsd');
+            const pctEl = document.getElementById('koTotalCouponPct');
+
+            if (koMonth !== null) {
+                const earnedMonths = koMonth;
+                const earnedRate = PRODUCT.monthlyCouponRate * earnedMonths;
+                const earnedUsd = state.principal * earnedRate;
+
+                tag.className = 'inline-flex items-center gap-1.5 text-xs font-bold text-sky-300 bg-sky-500/20 px-2.5 py-0.5 rounded-full';
+                tag.textContent = `🎉 第 ${koMonth} 個月觸發記憶型提前出場 (Memory KO)`;
+                title.textContent = `於「第 ${koMonth} 個月」3 檔標的皆完成記憶，商品提前出場拿回 100% 本金！`;
+                exp.innerHTML = `各標的達標記憶月份：NVDA (第${firstMemoryMonth.NVDA}月)、AVGO (第${firstMemoryMonth.AVGO}月)、NOW (第${firstMemoryMonth.NOW}月)。即使先前達標的股票在第 ${koMonth} 個月跌回 100% 以下，靠著<strong>「記憶機制」</strong>依然算數，客戶順利於第 ${koMonth} 個月提前落袋為安！`;
+                usdEl.textContent = formatUSD(earnedUsd);
+                pctEl.textContent = `實拿累積配息率：+${(earnedRate * 100).toFixed(2)}% (共領 ${earnedMonths} 個月)`;
+            } else {
+                const missing = PRODUCT.underlyings.filter(s => firstMemoryMonth[s] === null).join('、');
+                const fullUsd = state.principal * PRODUCT.total6MCouponRate;
+
+                tag.className = 'inline-flex items-center gap-1.5 text-xs font-bold text-emerald-300 bg-emerald-500/20 px-2.5 py-0.5 rounded-full';
+                tag.textContent = '⏳ 未觸發提前出場・持續領息至 6 個月期滿';
+                title.textContent = `因 ${missing} 尚未觸及 100%，商品不會提前出場，客戶可領滿 6 個月高息！`;
+                exp.innerHTML = `只要有任一檔股票未曾站上 100%，契約就會持續進行，這對想<strong>「領滿 6 個月 10.96% 年化高息」</strong>的客戶反而更划算！只要最後一天最差標的沒有跌破 65% EKI，客戶就能把 6 期配息全部領滿並拿回 100% 本金。`;
+                usdEl.textContent = formatUSD(fullUsd);
+                pctEl.textContent = `滿期 6 個月總配息率：+5.48% (共領 6 個月)`;
+            }
+        }
+
+        function toggleKoCell(sym, monthIdx) {
+            state.koMatrix[sym][monthIdx] = !state.koMatrix[sym][monthIdx];
+            renderKoMatrix();
+        }
+
+        function loadKoScenario(type) {
+            if (type === 'staggered') {
+                state.koMatrix = {
+                    NVDA: [true, true, false, false, false, false],
+                    AVGO: [false, false, true, false, false, false],
+                    NOW:  [false, false, true, true, false, false]
+                };
+            } else {
+                state.koMatrix = {
+                    NVDA: [true, true, true, false, false, false],
+                    AVGO: [false, true, false, true, false, false],
+                    NOW:  [false, false, false, false, false, false]
+                };
+            }
+            renderKoMatrix();
+        }
+
+        // Update Header & Sales Pitch Textarea
+        function refreshAllCalculations() {
+            const P = state.principal;
+            const monthlyUsd = P * PRODUCT.monthlyCouponRate;
+            const total6MUsd = P * PRODUCT.total6MCouponRate;
+
+            document.getElementById('headerMonthlyCoupon').textContent = formatUSD(monthlyUsd);
+            document.getElementById('headerTotalCoupon').textContent = formatUSD(total6MUsd);
+
+            updateSimulator(state.wpsFinalPct);
+            renderKoMatrix();
+            generateSalesPitch();
+        }
+
+        function generateSalesPitch() {
+            const P = state.principal;
+            const monthlyUsd = formatUSD(P * PRODUCT.monthlyCouponRate);
+            const total6MUsd = formatUSD(P * PRODUCT.total6MCouponRate);
+            const pFormatted = Number(P).toLocaleString('en-US');
+
+            const pitch = `【📢 精選 AI 龍頭美元 FCN 固定配息專案｜代號：SNINR202610013】
+
+您好！跟您分享一檔條件非常漂亮、攻守兼備的 6 個月期美元結構型商品：
+🔹 連結標的：輝達 (NVDA) + 博通 (AVGO) + ServiceNow (NOW)
+🔹 天期 / 幣別：6 個月 / 美元 (USD)
+🔹 固定年化配息率：10.96%（每月配息約 0.9133%，半年總息 5.48%）
+🔹 轉換價 (Strike)：進場收盤價之 70%（相當於打 7 折安全墊）
+🔹 下限價 (KI)：65% 歐式觀察 (EKI) —— 盤中震盪跌破不算，只看最後一天！
+🔹 提前出場 (KO)：100%，滿 1 個月後每日觀察且具「記憶機制」
+
+💡【以申購 ${pFormatted} 美元試算】
+✅ 每月穩定領息：約 ${monthlyUsd} 美元（若領滿 6 個月共領息 ${total6MUsd} 美元）
+✅ 為什麼推薦這檔結構？
+1️⃣「記憶型 KO」好出場：滿 1 個月後，3 檔股票不需要同一天漲過 100%，只要各自在不同天曾經回到進場價一次就會被系統「記憶」，3 檔都記憶即提前出場拿回 100% 本金＋利息！
+2️⃣「歐式 EKI 65%」深度防護：前 6 個月期間就算遇到大盤修正跌破 65% 也完全不影響，只要期末最後一天最差標的收在 65% 以上（含 65%~70% 區間），依然 100% 拿回美元本金！
+3️⃣ 進可攻退可守：僅在期末最後一天最差股票跌破 65% 時，才會以「70% 轉換價（打 7 折）」折算承接 AI 龍頭股。
+
+⚠️ 風險提醒：本商品非保本型商品，最大風險為期末最差標的跌破 65% 時需依 70% 轉換價承接股票，並需留意發行機構信用風險與流動性風險。若您想看不同股價情境的損益試算，我隨時為您說明！`;
+
+            document.getElementById('pitchTextarea').value = pitch;
+        }
+
+        function copyPitchText() {
+            const textarea = document.getElementById('pitchTextarea');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                showToast('✅ LINE 提案話術已複製到剪貼簿！');
+            } catch (err) {
+                showToast('請手動全選複製文字');
+            }
+        }
+
+        function showToast(msg) {
+            const box = document.getElementById('toastBox');
+            document.getElementById('toastMsg').textContent = msg;
+            box.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                box.classList.add('translate-y-20', 'opacity-0');
+            }, 2600);
+        }
+
+        // Initialize on Window Load
+        window.onload = function () {
+            refreshAllCalculations();
+        };
+    </script>
+</body>
+</html>
